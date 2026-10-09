@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"project/pkg/utils"
@@ -31,6 +32,27 @@ func TestFactoryProxyPreservesConflictStatus(t *testing.T) {
 	}
 }
 
+func TestFactoryProxyExplainsRecoveryConflict(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusConflict)
+		_, _ = w.Write([]byte(`{"detail":"factory_recovery_unavailable"}`))
+	}))
+	defer upstream.Close()
+	t.Setenv("YOMI_FACTORY_API_BASE_URL", upstream.URL)
+	t.Setenv("YOMI_INTERNAL_TOKEN", "test-token")
+	router := gin.New()
+	router.POST("/batch", func(c *gin.Context) {
+		c.Set("claims", &utils.UserClaims{Authority: "SYS_ADMIN"})
+		proxyFactory(c, http.MethodPost, "", map[string]interface{}{"batchId": "batch-1"})
+	})
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/batch", nil))
+	if recorder.Code != http.StatusConflict || !strings.Contains(recorder.Body.String(), "设备状态不允许恢复") {
+		t.Fatalf("status=%d body=%s", recorder.Code, recorder.Body.String())
+	}
+}
+
 func TestFactoryAdminAllowsProductUsers(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	for _, tc := range []struct {
@@ -52,5 +74,28 @@ func TestFactoryAdminAllowsProductUsers(t *testing.T) {
 	c.Set("claims", &utils.UserClaims{Authority: "TENANT_USER"})
 	if factoryAdmin(c) {
 		t.Fatal("user without tenant must be denied")
+	}
+}
+
+func TestFactoryConnectionPreviewUsesDedicatedUpstream(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/v1/internal/factory-connection-preview" {
+			t.Errorf("wrong path: %s", r.URL.Path)
+		}
+		_, _ = w.Write([]byte(`{"code":0,"data":{"endpointDiscoveryVersion":1}}`))
+	}))
+	defer upstream.Close()
+	t.Setenv("YOMI_FACTORY_API_BASE_URL", upstream.URL)
+	t.Setenv("YOMI_INTERNAL_TOKEN", "test-token")
+	router := gin.New()
+	router.POST("/preview", func(c *gin.Context) {
+		c.Set("claims", &utils.UserClaims{Authority: "SYS_ADMIN"})
+		proxyFactory(c, http.MethodPost, "/connection-preview", map[string]interface{}{"productKey": "A100"})
+	})
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/preview", nil))
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("status=%d", recorder.Code)
 	}
 }

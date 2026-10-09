@@ -16,11 +16,13 @@ func (*Product) InitProduct(Router *gin.RouterGroup) {
 		url.DELETE(":id", api.Controllers.ProductApi.DeleteProduct)
 		url.GET("", api.Controllers.ProductApi.HandleProductListByPage)
 		url.GET("factory-batches", api.Controllers.ProductApi.ListFactoryBatches)
+		url.POST("factory-connection-preview", api.Controllers.ProductApi.PreviewFactoryConnection)
 		url.POST("factory-batches", api.Controllers.ProductApi.CreateFactoryBatch)
 		url.GET("factory-batches/:batchId", api.Controllers.ProductApi.GetFactoryBatch)
 		url.POST("factory-batches/:batchId/status", api.Controllers.ProductApi.SetFactoryBatchStatus)
 		url.POST("factory-batches/:batchId/stations", api.Controllers.ProductApi.IssueFactoryStationGrant)
 		url.POST("factory-batches/:batchId/stations/:grantId/revoke", api.Controllers.ProductApi.RevokeFactoryStationGrant)
 		url.POST("factory-batches/:batchId/units/:deviceId/enable", api.Controllers.ProductApi.EnableFactoryUnit)
+		url.POST("factory-batches/:batchId/units/:deviceId/restore", api.Controllers.ProductApi.RestoreFactoryUnit)
 	}
 }
