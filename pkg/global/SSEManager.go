@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"project/pkg/redisnamespace"
 	"sync"
 	"time"
 
@@ -94,7 +95,7 @@ func (m *SSEManager) ListenForEvents() {
 	backoff := initialBackoff
 
 	for {
-		pubsub := m.redisClient.PSubscribe(context.Background(), "sse:tenant:*")
+		pubsub := m.redisClient.PSubscribe(context.Background(), redisnamespace.Key("sse:tenant:*"))
 		for {
 			msg, err := pubsub.ReceiveMessage(context.Background())
 			if err != nil {

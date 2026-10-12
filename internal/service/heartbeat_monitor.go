@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
+	"os"
+	"project/pkg/redisnamespace"
 	"strings"
 
 	"github.com/redis/go-redis/v9"
@@ -89,6 +91,10 @@ func (m *HeartbeatMonitor) Stop() error {
 
 // configureRedis 配置 Redis 启用过期事件通知
 func (m *HeartbeatMonitor) configureRedis() error {
+	// 共享生产实例的通知策略由原实例维护，应用不得改全局配置。
+	if os.Getenv("YGSOUL_REDIS_KEY_PREFIX") != "" {
+		return nil
+	}
 	// 设置 Redis 配置: notify-keyspace-events Ex
 	// E - keyevent 事件, x - 过期事件
 	err := m.redis.ConfigSet(m.ctx, "notify-keyspace-events", "Ex").Err()
@@ -101,12 +107,17 @@ func (m *HeartbeatMonitor) configureRedis() error {
 
 // handleExpiredKey 处理过期的 Redis key
 func (m *HeartbeatMonitor) handleExpiredKey(msg *redis.Message) {
+	// 仅处理本实例命名空间的过期键，排除共享Redis上其它应用状态。
+	if prefix := os.Getenv("YGSOUL_REDIS_KEY_PREFIX"); prefix != "" && !strings.HasPrefix(msg.Payload, prefix) {
+		return
+	}
+	payload := redisnamespace.Original(msg.Payload)
 	// 解析 key: device:{deviceId}:{type}
-	if !strings.HasPrefix(msg.Payload, "device:") {
+	if !strings.HasPrefix(payload, "device:") {
 		return
 	}
 
-	parts := strings.Split(msg.Payload, ":")
+	parts := strings.Split(payload, ":")
 	if len(parts) != 3 {
 		return
 	}

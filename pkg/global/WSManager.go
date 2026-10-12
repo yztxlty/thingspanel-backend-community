@@ -3,6 +3,7 @@ package global
 import (
 	"context"
 	"encoding/json"
+	"project/pkg/redisnamespace"
 	"sync"
 	"time"
 
@@ -228,7 +229,7 @@ func (m *WSManager) ListenForEvents() {
 	logrus.Info("WebSocketManager started listening for Redis Pub/Sub events")
 
 	for {
-		pubsub := m.redisClient.PSubscribe(ctx, "ws:device:*")
+		pubsub := m.redisClient.PSubscribe(ctx, redisnamespace.Key("ws:device:*"))
 		for {
 			msg, err := pubsub.ReceiveMessage(ctx)
 			if err != nil {

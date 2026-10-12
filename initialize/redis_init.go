@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
+	"project/pkg/redisnamespace"
 	"time"
 
 	"project/internal/dal"
@@ -70,6 +72,13 @@ func connectRedis(conf *RedisConfig) *redis.Client {
 		DB:         conf.DB,
 		MaxRetries: 1, // 限制重试次数，避免放大错误量
 	})
+	if prefix := os.Getenv("YGSOUL_REDIS_KEY_PREFIX"); prefix != "" {
+		hook, err := redisnamespace.New(prefix)
+		if err != nil {
+			panic(err)
+		}
+		redisClient.AddHook(hook)
+	}
 	return redisClient
 }
 

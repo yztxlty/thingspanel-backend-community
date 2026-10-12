@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"project/pkg/redisnamespace"
 	"strconv"
 	"strings"
 	"sync"
@@ -684,7 +685,7 @@ func (*TelemetryDataApi) ServeDeviceStatusByWS(c *gin.Context) {
 	defer cancel()
 
 	channel := fmt.Sprintf("device:%s:status", deviceID)
-	pubsub := global.REDIS.Subscribe(ctx, channel)
+	pubsub := global.REDIS.Subscribe(ctx, redisnamespace.Key(channel))
 	defer pubsub.Close()
 
 	logrus.Infof("WebSocket已订阅Redis通道: %s", channel)

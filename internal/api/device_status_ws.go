@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"project/pkg/redisnamespace"
 	"strings"
 	"sync"
 	"time"
@@ -171,7 +172,7 @@ func (*TelemetryDataApi) ServeDeviceOnlineStatusWS(c *gin.Context) {
 
 	channels := make([]string, 0, len(deviceIDs))
 	for _, did := range deviceIDs {
-		channels = append(channels, fmt.Sprintf("device:%s:status", did))
+		channels = append(channels, redisnamespace.Key(fmt.Sprintf("device:%s:status", did)))
 	}
 
 	pubsub := global.REDIS.Subscribe(ctx, channels...)
@@ -197,7 +198,7 @@ func (*TelemetryDataApi) ServeDeviceOnlineStatusWS(c *gin.Context) {
 				payload := []byte(msg.Payload)
 				deviceID := ""
 				// Redis channel 预期格式: device:{device_id}:status
-				parts := strings.Split(msg.Channel, ":")
+				parts := strings.Split(redisnamespace.Original(msg.Channel), ":")
 				if len(parts) >= 3 {
 					deviceID = parts[1]
 				}
