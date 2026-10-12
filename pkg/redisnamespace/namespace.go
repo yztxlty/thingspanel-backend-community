@@ -55,8 +55,13 @@ func (h *Hook) prefix(cmd redis.Cmder) error {
 	args := cmd.Args()
 	indexes := []int{}
 	switch strings.ToLower(cmd.Name()) {
-	case "ping", "hello", "auth", "select", "client", "multi", "exec", "discard":
+	case "ping", "hello", "auth", "select", "multi", "exec", "discard":
 		return nil
+	case "client":
+		if len(args) > 1 && (strings.EqualFold(fmt.Sprint(args[1]), "setinfo") || strings.EqualFold(fmt.Sprint(args[1]), "setname")) {
+			return nil
+		}
+		return fmt.Errorf("共享Redis不允许客户端管理命令")
 	case "get", "set", "setnx", "incr", "decr", "expire", "pexpire", "ttl", "pttl", "hset", "hget", "hgetall", "hincrby", "hdel", "lpush", "rpush", "lrange", "llen", "ltrim", "lrem", "lset", "publish":
 		indexes = []int{1}
 	case "del", "exists":

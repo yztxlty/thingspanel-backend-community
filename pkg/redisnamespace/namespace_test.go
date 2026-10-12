@@ -29,7 +29,7 @@ func TestNamespaceCommands(t *testing.T) {
 			t.Fatalf("got %v want %v", cmd.Args(), c.want)
 		}
 	}
-	for _, args := range [][]interface{}{{"flushdb"}, {"config", "set", "notify-keyspace-events", "Ex"}, {"eval", "return 1", 0}, {"scan", 0}} {
+	for _, args := range [][]interface{}{{"flushdb"}, {"client", "kill", "type", "normal"}, {"config", "set", "notify-keyspace-events", "Ex"}, {"eval", "return 1", 0}, {"scan", 0}} {
 		if err := h.prefix(redis.NewCmd(context.Background(), args...)); err == nil {
 			t.Fatalf("unsafe command allowed: %v", args)
 		}
