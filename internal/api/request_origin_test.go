@@ -7,7 +7,21 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 )
+
+func TestThingsVisInternalAPIUsesProductionPrivateAddress(t *testing.T) {
+	original := viper.GetString("thingsvis.internal_api_url")
+	defer viper.Set("thingsvis.internal_api_url", original)
+	viper.Set("thingsvis.internal_api_url", "http://192.168.0.2:28000/api/v1/")
+	if got := thingsVisInternalAPIBase("https://yomipro.gwcz.online"); got != "http://192.168.0.2:28000/api/v1" {
+		t.Fatalf("服务调用不应回绕公网：%s", got)
+	}
+	viper.Set("thingsvis.internal_api_url", "")
+	if got := thingsVisInternalAPIBase("https://legacy.example"); got != "https://legacy.example/thingsvis-api" {
+		t.Fatalf("未配置环境兼容被改变：%s", got)
+	}
+}
 
 func TestRequestPublicOriginUsesBrowserOrigin(t *testing.T) {
 	tests := []struct {

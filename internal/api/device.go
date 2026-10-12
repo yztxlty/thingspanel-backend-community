@@ -1005,7 +1005,7 @@ func (*DeviceApi) AnalyzeDashboardBundle(c *gin.Context) {
 		return
 	}
 	claims := c.MustGet("claims").(*utils.UserClaims)
-	result, err := service.NewMarketDashboardBundleService(publicOrigin+"/thingsvis-api").Analyze(
+	result, err := service.NewMarketDashboardBundleService(thingsVisInternalAPIBase(publicOrigin)).Analyze(
 		c.Request.Context(),
 		req.DashboardID,
 		c.GetHeader("Authorization"),
@@ -1031,7 +1031,7 @@ func (*DeviceApi) PublishDashboardBundle(c *gin.Context) {
 		return
 	}
 	claims := c.MustGet("claims").(*utils.UserClaims)
-	result, err := service.NewMarketDashboardBundleService(publicOrigin+"/thingsvis-api").Publish(
+	result, err := service.NewMarketDashboardBundleService(thingsVisInternalAPIBase(publicOrigin)).Publish(
 		c.Request.Context(),
 		&req,
 		c.GetHeader("Authorization"),
@@ -1137,7 +1137,7 @@ func (*DeviceApi) CreateDashboardFromLocalTemplate(c *gin.Context) {
 		return
 	}
 	claims := c.MustGet("claims").(*utils.UserClaims)
-	result, err := service.NewDashboardTemplateServiceWithThingsVisBaseURL(publicOrigin+"/thingsvis-api").CreateInstance(
+	result, err := service.NewDashboardTemplateServiceWithThingsVisBaseURL(thingsVisInternalAPIBase(publicOrigin)).CreateInstance(
 		c.Request.Context(),
 		claims.TenantID,
 		claims.ID,

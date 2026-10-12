@@ -7,7 +7,15 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 )
+
+func thingsVisInternalAPIBase(publicOrigin string) string {
+	if internal := strings.TrimSpace(viper.GetString("thingsvis.internal_api_url")); internal != "" {
+		return strings.TrimRight(internal, "/")
+	}
+	return strings.TrimRight(publicOrigin, "/") + "/thingsvis-api"
+}
 
 func requestPublicOrigin(c *gin.Context) (string, error) {
 	requestHost := firstHeaderValue(c.GetHeader("X-Forwarded-Host"))
