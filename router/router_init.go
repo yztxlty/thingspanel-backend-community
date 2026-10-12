@@ -128,6 +128,8 @@ func RouterInit() *gin.Engine {
 
 		// 需要权限校验
 		v1.Use(middleware.JWTAuth())
+		// 个人身份交换复用登录认证，不依赖业务菜单权限。
+		v1.POST("thingsvis/auth/sso", controllers.UserApi.ThingsVisSSO)
 
 		// 需要权限校验
 		v1.Use(middleware.CasbinRBAC())
